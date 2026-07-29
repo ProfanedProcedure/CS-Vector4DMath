@@ -26,7 +26,7 @@ namespace Vector4DMath
 
         public float this[int index]
         {
-            get
+            readonly get
             {
                 switch (index)
                 {
@@ -51,25 +51,25 @@ namespace Vector4DMath
         }
 
         // ---------------- 定数 ----------------
-        public static Vector4D zero => new Vector4D(0, 0, 0, 0);
-        public static Vector4D one => new Vector4D(1, 1, 1, 1);
-        public static Vector4D unitX => new Vector4D(1, 0, 0, 0);
-        public static Vector4D unitY => new Vector4D(0, 1, 0, 0);
-        public static Vector4D unitZ => new Vector4D(0, 0, 1, 0);
-        public static Vector4D unitW => new Vector4D(0, 0, 0, 1);
-        public static Vector4D positiveInfinity => new Vector4D(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
-        public static Vector4D negativeInfinity => new Vector4D(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
+        public static Vector4D Zero => new Vector4D(0, 0, 0, 0);
+        public static Vector4D One => new Vector4D(1, 1, 1, 1);
+        public static Vector4D UnitX => new Vector4D(1, 0, 0, 0);
+        public static Vector4D UnitY => new Vector4D(0, 1, 0, 0);
+        public static Vector4D UnitZ => new Vector4D(0, 0, 1, 0);
+        public static Vector4D UnitW => new Vector4D(0, 0, 0, 1);
+        public static Vector4D PositiveInfinity => new Vector4D(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+        public static Vector4D NegativeInfinity => new Vector4D(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
 
         // ---------------- プロパティ ----------------
-        public float sqrMagnitude => x * x + y * y + z * z + w * w;
-        public float magnitude => Mathf.Sqrt(sqrMagnitude);
+        public readonly float SqrMagnitude => x * x + y * y + z * z + w * w;
+        public readonly float Magnitude => Mathf.Sqrt(SqrMagnitude);
 
-        public Vector4D normalized
+        public readonly Vector4D Normalized
         {
             get
             {
-                float m = magnitude;
-                return m > 1e-9f ? this / m : zero;
+                float m = Magnitude;
+                return m > 1e-9f ? this / m : Zero;
             }
         }
 
@@ -80,7 +80,7 @@ namespace Vector4DMath
 
         public void Normalize()
         {
-            float m = magnitude;
+            float m = Magnitude;
             if (m > 1e-9f) { x /= m; y /= m; z /= m; w /= m; }
             else { x = y = z = w = 0; }
         }
@@ -88,8 +88,8 @@ namespace Vector4DMath
         // ---------------- 静的演算 ----------------
         public static float Dot(Vector4D a, Vector4D b) => a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 
-        public static float Distance(Vector4D a, Vector4D b) => (a - b).magnitude;
-        public static float SqrDistance(Vector4D a, Vector4D b) => (a - b).sqrMagnitude;
+        public static float Distance(Vector4D a, Vector4D b) => (a - b).Magnitude;
+        public static float SqrDistance(Vector4D a, Vector4D b) => (a - b).SqrMagnitude;
 
         public static Vector4D Lerp(Vector4D a, Vector4D b, float t)
         {
@@ -111,8 +111,8 @@ namespace Vector4DMath
         /// </summary>
         public static Vector4D Slerp(Vector4D a, Vector4D b, float t)
         {
-            float magA = a.magnitude;
-            float magB = b.magnitude;
+            float magA = a.Magnitude;
+            float magB = b.Magnitude;
             if (magA < 1e-9f || magB < 1e-9f) return LerpUnclamped(a, b, Mathf.Clamp01(t));
 
             Vector4D an = a / magA;
@@ -133,14 +133,14 @@ namespace Vector4DMath
         public static Vector4D MoveTowards(Vector4D current, Vector4D target, float maxDistanceDelta)
         {
             Vector4D toVector = target - current;
-            float dist = toVector.magnitude;
+            float dist = toVector.Magnitude;
             if (dist <= maxDistanceDelta || dist < 1e-9f) return target;
             return current + toVector / dist * maxDistanceDelta;
         }
 
         public static float Angle(Vector4D a, Vector4D b)
         {
-            float denom = a.magnitude * b.magnitude;
+            float denom = a.Magnitude * b.Magnitude;
             if (denom < 1e-15f) return 0f;
             float cos = Mathf.Clamp(Dot(a, b) / denom, -1f, 1f);
             return Mathf.Acos(cos) * Mathf.Rad2Deg;
@@ -151,7 +151,7 @@ namespace Vector4DMath
         public static Vector4D Project(Vector4D v, Vector4D onNormal)
         {
             float sqrMag = Dot(onNormal, onNormal);
-            if (sqrMag < 1e-15f) return zero;
+            if (sqrMag < 1e-15f) return Zero;
             return onNormal * (Dot(v, onNormal) / sqrMag);
         }
 
@@ -170,7 +170,7 @@ namespace Vector4DMath
 
         public static Vector4D ClampMagnitude(Vector4D v, float maxLength)
         {
-            if (v.sqrMagnitude > maxLength * maxLength) return v.normalized * maxLength;
+            if (v.SqrMagnitude > maxLength * maxLength) return v.Normalized * maxLength;
             return v;
         }
 
@@ -186,7 +186,7 @@ namespace Vector4DMath
         /// </summary>
         public static Vector4D Cross(Vector4D a, Vector4D b, Vector4D c)
         {
-            float Det3(float a1, float a2, float a3, float b1, float b2, float b3, float c1, float c2, float c3)
+            static float Det3(float a1, float a2, float a3, float b1, float b2, float b3, float c1, float c2, float c3)
                 => a1 * (b2 * c3 - b3 * c2) - a2 * (b1 * c3 - b3 * c1) + a3 * (b1 * c2 - b2 * c1);
 
             float cx =  Det3(a.y, a.z, a.w, b.y, b.z, b.w, c.y, c.z, c.w);
@@ -203,13 +203,13 @@ namespace Vector4DMath
         public static Vector4D operator *(Vector4D a, float d) => new Vector4D(a.x * d, a.y * d, a.z * d, a.w * d);
         public static Vector4D operator *(float d, Vector4D a) => new Vector4D(a.x * d, a.y * d, a.z * d, a.w * d);
         public static Vector4D operator /(Vector4D a, float d) => new Vector4D(a.x / d, a.y / d, a.z / d, a.w / d);
-        public static bool operator ==(Vector4D a, Vector4D b) => (a - b).sqrMagnitude < 1e-10f;
+        public static bool operator ==(Vector4D a, Vector4D b) => (a - b).SqrMagnitude < 1e-10f;
         public static bool operator !=(Vector4D a, Vector4D b) => !(a == b);
 
-        public bool Equals(Vector4D other) => x.Equals(other.x) && y.Equals(other.y) && z.Equals(other.z) && w.Equals(other.w);
-        public override bool Equals(object obj) => obj is Vector4D other && Equals(other);
+        public readonly bool Equals(Vector4D other) => x.Equals(other.x) && y.Equals(other.y) && z.Equals(other.z) && w.Equals(other.w);
+        public override readonly bool Equals(object obj) => obj is Vector4D other && Equals(other);
 
-        public override int GetHashCode()
+        public override readonly int GetHashCode()
         {
             unchecked
             {
@@ -222,9 +222,9 @@ namespace Vector4DMath
             }
         }
 
-        public override string ToString() => $"({x:F2}, {y:F2}, {z:F2}, {w:F2})";
+        public override readonly string ToString() => $"({x:F2}, {y:F2}, {z:F2}, {w:F2})";
 
         /// <summary>wを切り捨てて3次元へ落とす。射影ではなくただの成分カット。</summary>
-        public Vector3 ToVector3() => new Vector3(x, y, z);
+        public readonly Vector3 ToVector3() => new Vector3(x, y, z);
     }
 }
