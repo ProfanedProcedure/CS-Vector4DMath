@@ -1,6 +1,6 @@
 {
   "name": "com.profanedprocedure.vector4dmath",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "displayName": "Vector4D Math",
   "description": "Unity用の4次元幾何学ライブラリ。Vector3/Matrix4x4/Quaternionが持つ機能一式を4次元へ拡張したもの。UnityEngine.Vector4（同次座標付き3Dベクトル）とは別概念のVector4D、6つの基本回転面(XY,XZ,XW,YZ,YW,ZW)によるMatrix4x4D、二重回転・等傾回転を表すRotor4D、4D→3D投影とテッセラクトのトポロジー生成を行うProjection4Dを提供する。",
   "unity": "2021.3",
