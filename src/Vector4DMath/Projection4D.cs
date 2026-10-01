@@ -26,32 +26,35 @@ namespace Vector4DMath
 
         public static class Pentachoron
         {
-            /// <summary>
-            /// 正五胞体の5頂点を生成する。
-            /// </summary>
             public static Vector4D[] GenerateVertices(float size = 1f)
             {
-                // 5次元の単位ベクトル e0..e4 を、重心(1/5,1/5,1/5,1/5,1/5)基準に
-                // 「和が0になる4次元部分空間」へ射影してから、4成分だけ取り出す。
-                // （5次元目の成分は射影後常に従属するため、先頭4成分のみで4D座標として扱える）
-                var verts = new Vector4D[5];
-                float[][] e = new float[5][];
-                for (int i = 0; i < 5; i++)
+                // 底面：正四面体(3D)の4頂点。TetrahedronVerts()と同じ配置。
+                float s = 1f / Mathf.Sqrt(2f);
+                Vector3[] baseTri = new Vector3[]
                 {
-                    e[i] = new float[5];
-                    e[i][i] = 1f;
-                }
+                    new(1, 0, -s),
+                    new(-1, 0, -s),
+                    new(0, 1, s),
+                    new(0, -1, s),
+                };
 
-                // 重心を引いて中心化（これで「和が0」の超平面に乗る）
-                for (int i = 0; i < 5; i++)
-                    for (int k = 0; k < 5; k++)
-                        e[i][k] -= 0.2f; // 1/5
+                // 底面頂点の原点(XYZ重心)からの距離 r と、底面同士の辺長 a を求める。
+                float r = baseTri[0].magnitude; // 全頂点等距離なので代表1つでOK
+                float a = (baseTri[0] - baseTri[1]).magnitude;
 
-                // 正規化：どの頂点も原点から同じ距離になるようスケールを揃える
-                float norm = Mathf.Sqrt(e[0][0] * e[0][0] + e[0][1] * e[0][1] + e[0][2] * e[0][2] + e[0][3] * e[0][3] + e[0][4] * e[0][4]);
+                // 頂角から底面までの距離も a にしたい： r^2 + hOffset^2 = a^2
+                float hOffsetSq = a * a - r * r;
+                float hOffset = Mathf.Sqrt(Mathf.Max(0f, hOffsetSq));
 
-                for (int i = 0; i < 5; i++)
-                    verts[i] = new Vector4D(e[i][0] / norm * size, e[i][1] / norm * size, e[i][2] / norm * size, e[i][3] / norm * size);
+                // 底面のW座標を -hOffset/2、頂角のW座標を +hOffset/2 に置き、
+                // 全体の重心が原点に来るよう対称に配置する。
+                float baseW = -hOffset * 0.5f;
+                float apexW = hOffset * 0.5f;
+
+                var verts = new Vector4D[5];
+                for (int i = 0; i < 4; i++)
+                    verts[i] = new Vector4D(baseTri[i].x, baseTri[i].y, baseTri[i].z, baseW) * size;
+                verts[4] = new Vector4D(0, 0, 0, apexW) * size;
 
                 return verts;
             }
