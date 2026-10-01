@@ -24,6 +24,52 @@ namespace Vector4DMath
         /// <summary>単純にwを切り捨てるだけの平行投影。奥行き感は失われるが計算は軽い。</summary>
         public static Vector3 ProjectOrthographic(Vector4D point) => new Vector3(point.x, point.y, point.z);
 
+        public static class Pentachoron
+        {
+            /// <summary>
+            /// 正五胞体の5頂点を生成する。
+            /// </summary>
+            public static Vector4D[] GenerateVertices(float size = 1f)
+            {
+                // 5次元の単位ベクトル e0..e4 を、重心(1/5,1/5,1/5,1/5,1/5)基準に
+                // 「和が0になる4次元部分空間」へ射影してから、4成分だけ取り出す。
+                // （5次元目の成分は射影後常に従属するため、先頭4成分のみで4D座標として扱える）
+                var verts = new Vector4D[5];
+                float[][] e = new float[5][];
+                for (int i = 0; i < 5; i++)
+                {
+                    e[i] = new float[5];
+                    e[i][i] = 1f;
+                }
+
+                // 重心を引いて中心化（これで「和が0」の超平面に乗る）
+                for (int i = 0; i < 5; i++)
+                    for (int k = 0; k < 5; k++)
+                        e[i][k] -= 0.2f; // 1/5
+
+                // 正規化：どの頂点も原点から同じ距離になるようスケールを揃える
+                float norm = Mathf.Sqrt(e[0][0] * e[0][0] + e[0][1] * e[0][1] + e[0][2] * e[0][2] + e[0][3] * e[0][3] + e[0][4] * e[0][4]);
+
+                for (int i = 0; i < 5; i++)
+                    verts[i] = new Vector4D(e[i][0] / norm * size, e[i][1] / norm * size, e[i][2] / norm * size, e[i][3] / norm * size);
+
+                return verts;
+            }
+
+            /// <summary>
+            /// 正五胞体の辺(頂点インデックスのペア10本)。単体なので全頂点対が辺になる
+            /// （5頂点から2つ選ぶ組み合わせ、C(5,2)=10）。
+            /// </summary>
+            public static (int a, int b)[] GenerateEdges()
+            {
+                var edges = new System.Collections.Generic.List<(int, int)>();
+                for (int i = 0; i < 5; i++)
+                    for (int j = i + 1; j < 5; j++)
+                        edges.Add((i, j));
+                return edges.ToArray();
+            }
+        }
+
         public static class Tesseract
         {
             /// <summary>
@@ -106,6 +152,64 @@ namespace Vector4DMath
                         if (!isAntipodalPair) edges.Add((i, j));
                     }
                 return edges.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// 正二十四胞体(24-cell)。4次元にしか存在しない、3次元に対応物の無い多胞体。
+        /// 頂点は「2成分が±1、残り2成分が0」の全組み合わせ、C(4,2)×4=24個。
+        /// 双対を取っても自分自身になる(self-dual)という珍しい性質を持つ。
+        /// </summary>
+        public static class Icositetrachoron
+        {
+            /// <summary>
+            /// 正二十四胞体の24頂点を生成する。
+            /// </summary>
+            public static Vector4D[] GenerateVertices(float size = 1f)
+            {
+                var verts = new System.Collections.Generic.List<Vector4D>();
+                int[] axes = { 0, 1, 2, 3 };
+
+                for (int a = 0; a < 4; a++)
+                    for (int b = a + 1; b < 4; b++)
+                        for (int sa = -1; sa <= 1; sa += 2)
+                            for (int sb = -1; sb <= 1; sb += 2)
+                            {
+                                var v = new Vector4D(0, 0, 0, 0);
+                                v[a] = sa * size;
+                                v[b] = sb * size;
+                                verts.Add(v);
+                            }
+
+                return verts.ToArray(); // C(4,2)=6通り × 2 × 2 = 24
+            }
+
+            /// <summary>
+            /// 正二十四胞体の辺(頂点インデックスのペア96本)。
+            /// 24-cellの辺長は頂点間距離√2が最小距離になるため、最小距離ペアを辺として抽出する
+            /// （3D版PolygonShapeRenderer.Factory.SnubDodecahedronと同じ「最小距離ペア抽出」方式）。
+            /// </summary>
+            public static (int a, int b)[] GenerateEdges()
+            {
+                Vector4D[] verts = GenerateVertices(1f);
+                int n = verts.Length;
+
+                float minSq = float.MaxValue;
+                for (int i = 0; i < n; i++)
+                    for (int j = i + 1; j < n; j++)
+                    {
+                        float d = Vector4D.SqrDistance(verts[i], verts[j]);
+                        if (d < minSq) minSq = d;
+                    }
+
+                float threshold = minSq * 1.01f;
+                var edges = new System.Collections.Generic.List<(int, int)>();
+                for (int i = 0; i < n; i++)
+                    for (int j = i + 1; j < n; j++)
+                        if (Vector4D.SqrDistance(verts[i], verts[j]) <= threshold)
+                            edges.Add((i, j));
+
+                return edges.ToArray(); // 24頂点×8本/2 = 96辺になるはず
             }
         }
     }
